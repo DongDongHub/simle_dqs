@@ -10,11 +10,11 @@
 #include <thrift/transport/TBufferTransports.h>
 #include<string>
 
-//etcd client
-#include "etcdclient.h"
+
 #include<iostream>
-#include<exception>
-#include <thread>
+
+#include"service_provider.h"
+
 
 
 using namespace ::apache::thrift;
@@ -23,17 +23,7 @@ using namespace ::apache::thrift::transport;
 using namespace ::apache::thrift::server;
 
 using boost::shared_ptr;
-using namespace etcd;
 
-vector<Host> host_list { Host("192.168.33.10", 2379l) };
-Session s(host_list);
-
-#define HOST "10.0.2.15"
-#define PORT 9092 
-#define ROOT_DIR "/jiot"
-#define SVR_DIR  "/jiot/dqs"
-#define NORMAL_SLEEP_SEC 12
-#define SHORT_SLEEP_SEC  2
 
 class dqsServiceHandler : virtual public dqsServiceIf {
 	public:
@@ -51,147 +41,23 @@ class dqsServiceHandler : virtual public dqsServiceIf {
 };
 
 
-bool existDir(const string& dirPath)
-{
-	unique_ptr<GetResponse> resp = s.get(dirPath);
-	if( resp->getError() != nullptr ) {
-		std::cout<< "error occur " << resp->getError()->getMessage() <<std::endl;
-		return false;
-	}
 
-	if( !resp->getNode()->isDirectory() ){
-		std::cout<< "node is not dir" <<std::endl;
-		return false;
-	}
-
-	return true;
-}
-
-bool mkDir(const string& dirPath)
-{
-	unique_ptr<PutResponse> rsp = s.putDirectory(dirPath);
-	if( rsp->getError() != nullptr ) // mkdir err
-	{
-		return existDir(dirPath);	
-	}
-	return true;
-}
-
-
-bool detectAssignedDir( const string & dirPath)
-{
-	if( existDir(dirPath) )
-	{
-		return true;
-	}
-	return mkDir(dirPath);
-}
-
-
-bool registerServiceImpl()
-{
-	string str = HOST;
-	str.append(":");
-	str.append(to_string(PORT));
-	string strTmp = "dds123";
-	cout << "key : "<<str <<" val : " << strTmp <<endl;
-	unique_ptr<PutResponse> rsp = s.put("/jiot/dqs/" + str, strTmp, 60);
-//	unique_ptr<PutResponse> rsp = s.put( str, strTmp, 15);
-	if( rsp->getError() != nullptr ) // mkdir err
-	{
-		return false;	
-	}
-	return true;
-}
-
-void registService( bool xOneTime  )
-{
-	bool xRootDir = false , xSvrDir = false, xLastResult = false;
-	do 
-	{
-		try
-		{
-			xLastResult = false;
-			if( (!xRootDir) && (!detectAssignedDir("/jiot")) ) 
-			{
-				std::cout<< "check servce root  dir /jiot failed : " <<std::endl;
-			}
-			else
-			{
-				xRootDir = true;
-				std::cout<<"detect root dir "<<endl;
-			}
-			
-			if( (!xSvrDir) && (!detectAssignedDir("/jiot/dqs")) ) 
-			{
-				std::cout<< "check servce dir /jiot/dqs failed : " <<std::endl;
-			}
-			else
-			{
-				xSvrDir = true;
-				std::cout<<"detect svr dir "<<endl;
-			}
-			
-			if( xRootDir && xSvrDir )
-			{
-				if( !registerServiceImpl() )
-				{
-					std::cout<< "register service info failed" <<std::endl;
-				}
-				else
-				{
-					xLastResult = true;
-					std::cout<< "register service info success" <<std::endl;
-				}
-			}
-				
-			if ( !xOneTime ) { //周期性的时候才需要去 sleep 去更新 ttl
-				cout<<"xOneTime enter sleep "<<endl;
-				if( xLastResult ) {
-					sleep(12);
-				} else {
-					sleep(2);
-				}
-			}
-		}
-		catch( std::runtime_error &e ){
-			cout<<"catch std::runtime_error" <<e.what()<<endl;
-		}
-		catch( std::exception &e  ){
-			cout<<"catch std::exception " <<e.what()<<endl;
-		}
-		catch(...){
-			cout<<"catch std::unidentify_error" <<endl;
-		}
-	}
-	while( !xOneTime );
-	if( !xOneTime  ) {
-		cout<<"xOneTime exit "<<endl;
-	}
-}
-
-void registerServicePeriodly(bool xOneTime )
-{
-	if( !xOneTime ) //周期性的
-	{
-		auto fn = []() {
-			registService(false);
-		};
-
-		std::thread t1(fn);
-		t1.detach();	
-	}
-	registService( true );
-}
 
 int main(int argc, char **argv) {
 	(void)argv;
 	(void)argc;
-
-	registerServicePeriodly(true);
-	registerServicePeriodly(false);
-
+	
 	int port = PORT;
+	vector<Host> hosts;
+	if( !ServiceProvider.parseHosts("127.0.0.1:9092", hosts) )
+	{
+		cout<<"parse etcd hosts error"<<endl;	
+	}
+	ServiceProvider svrProvider( hosts, port);
+	svrProvider.registerServiceOnce();
+	svrProvider.registerServicePeriodly();
+	
+
 	boost::shared_ptr<dqsServiceHandler> handler(new dqsServiceHandler());
 	boost::shared_ptr<TProcessor> processor(new dqsServiceProcessor(handler));
 	boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));

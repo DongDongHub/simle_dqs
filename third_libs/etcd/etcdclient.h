@@ -117,6 +117,23 @@ namespace etcd {
     unique_ptr<PutResponse> deleteDirectory(string key);
     unique_ptr<PutResponse> deleteQueue(string key);
 
+	/**
+	 * detect assigned dir exist or not. 
+	 * if not exist then create if create success return true or return false
+	 */
+	bool detectAssignedDir( const string & dirPath);
+	
+private:
+	/**
+	 * simple check assigned dir exist or not
+	 */
+	bool existDir(const string& dirPath);
+	/**
+	 * simple mk assgined dir
+	 */
+	bool mkDir(const string& dirPath);
+	
+
   private:
     uint hostNo = 0;
     vector<Host> hosts;

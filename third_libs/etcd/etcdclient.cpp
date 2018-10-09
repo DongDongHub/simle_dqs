@@ -347,6 +347,43 @@ unique_ptr<PutResponse> Session::deleteQueue(string key) {
   return deleteDirectory(key);
 }
 
+
+bool Session::existDir(const string& dirPath)
+{
+	unique_ptr<GetResponse> resp = get(dirPath);
+	if( resp->getError() != nullptr ) {
+		std::cout<< "error occur " << resp->getError()->getMessage() <<std::endl;
+		return false;
+	}
+
+	if( !resp->getNode()->isDirectory() ){
+		std::cout<< "node is not dir" <<std::endl;
+		return false;
+	}
+
+	return true;
+}
+
+bool Session::mkDir(const string& dirPath)
+{
+	unique_ptr<PutResponse> rsp = putDirectory(dirPath);
+	if( rsp->getError() != nullptr ) // mkdir err
+	{
+		return existDir(dirPath);	
+	}
+	return true;
+}
+
+
+bool Session::detectAssignedDir( const string & dirPath)
+{
+	if( existDir(dirPath) )
+	{
+		return true;
+	}
+	return mkDir(dirPath);
+}
+
 Node* Node::leaf(string key,
                  string value,
                  string expiration,
