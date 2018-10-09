@@ -47,9 +47,9 @@ int main(int argc, char **argv) {
 	(void)argv;
 	(void)argc;
 	
-	int port = PORT;
+	int port = 9092;
 	vector<Host> hosts;
-	if( !ServiceProvider.parseHosts("127.0.0.1:9092", hosts) )
+	if( !ServiceProvider::parseHosts("192.168.33.10:2379", hosts) )
 	{
 		cout<<"parse etcd hosts error"<<endl;	
 	}
