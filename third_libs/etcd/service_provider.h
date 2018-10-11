@@ -7,7 +7,7 @@
 //etcd client
 #include "etcdclient.h"
 
-using namespace etcd;
+namespace etcd {
 
 class ServiceProvider {
 	public:
@@ -51,5 +51,6 @@ class ServiceProvider {
 		int     m_nEtcdHosts;
 };
 
+}
 #endif
 

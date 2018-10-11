@@ -9,7 +9,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
-#include "etcdclient.h"
+#include "etcd_cli.h"
 #include<string>
 
 using namespace std;
@@ -350,19 +350,24 @@ unique_ptr<PutResponse> Session::deleteQueue(string key) {
 
 bool Session::existDir(const string& dirPath)
 {
+	return existDirImpl(dirPath) == 0 ? true :false;
+}
+
+int Session::existDirImpl(const string& dirPath)
+{
 	unique_ptr<GetResponse> resp = get(dirPath);
 	if( resp->getError() != nullptr ) {
 		std::cout<< "error occur " << resp->getError()->getMessage() <<std::endl;
-		return false;
+		return EXIST_DIR_EXEC_ERR;
 	}
 
 	if( !resp->getNode()->isDirectory() ){
 		std::cout<< "node is not dir" <<std::endl;
-		return false;
+		return EXIST_DIR_TYPE_ERR;
 	}
-
-	return true;
+	return 0;	
 }
+
 
 bool Session::mkDir(const string& dirPath)
 {
@@ -482,3 +487,29 @@ ostream& operator<<(ostream& os, const Node* node) {
   }
   return os;
 }
+
+
+bool Host::parseHostFromString( string strHost, Host& host)
+{
+		boost::trim(strHost);
+		vector<string> items;
+		boost::split( items, strHost, [](char c){return c == ':';});
+		if( items.size() == 2 )
+		{
+			if( items[0].length() > 0 && items[1].length() > 0 )
+			{
+				try 
+				{
+					 host.setHost( items[0] );
+					 host.setPort( stoi(items[1] );
+					return true;
+				}
+				catch( std::invalid_argument &e )
+				{
+					cout<< " stoi invalid params  "<< e.what()<< endl;
+				}
+			}
+		}
+		return false;
+}
+

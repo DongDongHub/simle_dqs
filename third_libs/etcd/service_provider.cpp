@@ -42,23 +42,10 @@ bool ServiceProvider::parseHosts( const string& strHosts, vector<Host>& hosts){
 			}
 		}
 		for( auto &str : result ){
-			boost::trim(str);
-			vector<string> items;
-			boost::split( items, str, [](char c){return c == ':';});
-			if( items.size() == 2 )
+			Host host;
+			if( Host::parseHostFromString( str, host) )
 			{
-				if( items[0].length() > 0 && items[1].length() > 0 )
-				{
-					try 
-					{
-						int nPort = stoi(items[1]);
-						hosts.push_back( Host(items[0], nPort) );
-					}
-					catch( std::invalid_argument &e )
-					{
-						cout<< " stoi invalid params  "<< e.what()<< endl;
-					}
-				}
+				hosts.push_back( Host(items[0], nPort) );				
 			}
 		}
 	}

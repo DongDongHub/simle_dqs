@@ -7,6 +7,10 @@
 #include <functional>
 #include "rapidjson/document.h"
 
+#define EXIST_DIR_EXEC_ERR 1
+#define EXIST_DIR_TYPE_ERR 2
+
+
 using namespace std;
 
 namespace etcd {
@@ -122,12 +126,21 @@ namespace etcd {
 	 * if not exist then create if create success return true or return false
 	 */
 	bool detectAssignedDir( const string & dirPath);
-	
-private:
+
 	/**
 	 * simple check assigned dir exist or not
 	 */
 	bool existDir(const string& dirPath);
+
+
+	/**
+	 * simple check assigned dir exist or not
+	 */
+	int existDirImpl(const string& dirPath);	
+	
+private:
+
+	
 	/**
 	 * simple mk assgined dir
 	 */
@@ -145,10 +158,17 @@ private:
    */
   class Host {
   public:
+	Host()  {}  	
     Host(string host, int port) : host(host), port(port) {}
+  public:
+	static bool parseHostFromString(string strHost, Host& host); 
+	
 
     string getHost() const { return host; }
     int getPort() const { return port; }
+
+	void setHost( const string strHost ){ host = strHost; }
+	void setPort(int nPort){ port = nPort; }
 
   private:
     string host;
