@@ -1,5 +1,9 @@
 #include"service_consumer.h"
 #include<iostream>
+#include<thread>
+#include <boost/algorithm/string.hpp>
+
+using namespace etcd;
 
 ServiceConsumer::ServiceConsumer(vector<Host> hosts, 
 				 const string strRootDir,
@@ -11,7 +15,7 @@ ServiceConsumer::ServiceConsumer(vector<Host> hosts,
 	m_xInit = false;
 	m_xThread = false;
 	m_nRootIndex = -1;
-	m_nStat = SYNC;
+	m_nStat = UNSYNC;
 
 	if( ( hosts.size() > 0 )  && 
 		( m_vecSvrDir.size() > 0 )    &&
@@ -21,7 +25,7 @@ ServiceConsumer::ServiceConsumer(vector<Host> hosts,
 		m_xInit = true;
 	}
 
-	for( auto &item : vecSvrDirs )
+	for( auto &item : m_vecSvrDir)
 	{
 		vector<Host> vec;
 		if( item.length() > 0 )
@@ -37,22 +41,23 @@ bool ServiceConsumer::getServiceProvider( const string& strSvrDir, string & ip, 
 {
 	if( m_nStat == UNSYNC )
 	{
+		cout<<" basic svr dir "<< strSvrDir<<endl;
 		if( !updateServiceProvider( strSvrDir ) )
 		{
 			cout<< " update svr dir failed. " <<endl;
 			return false;
 		}
 		
-		if( !m_xThread )
-		{
-			auto fn = [this](){
-				this->updateServiceProvider(false);
-			};
-
-			std::thread t1(fn);
-			t1.detach();	
-			m_xThread = true;			
-		}
+//		if( !m_xThread )
+//		{
+//			auto fn = [this](){
+//				this->updateServiceProvider();
+//			};
+//
+//			std::thread t1(fn);
+//			t1.detach();	
+//			m_xThread = true;			
+//		}
 	}
 
 	string strFullDir = m_strRootDir + "/" + strSvrDir;
@@ -61,7 +66,7 @@ bool ServiceConsumer::getServiceProvider( const string& strSvrDir, string & ip, 
 		return false;
 	}
 
-	vector<string> vecSvr = m_mProviders[strFullDir];
+	vector<Host>& vecSvr = m_mProviders[strFullDir];
 	if( vecSvr.size() == 0 )
 	{
 		return false;
@@ -79,7 +84,7 @@ bool ServiceConsumer::getServiceProvider( const string& strSvrDir, string & ip, 
 }
 
 
-void  ServiceConsumer::updateServiceProvider(   )
+void  ServiceConsumer::updateServiceProvider()
 {
 	while(1)
 	{
@@ -112,7 +117,7 @@ void ServiceConsumer::watchServiceProdivers()
 	{
 
 			vector<Node> children ;	
-			int i = 0
+			int i = 0;
 			for(  ; i < 3; ++i )
 			{
 				unique_ptr<GetResponse> rsp;
@@ -125,13 +130,13 @@ void ServiceConsumer::watchServiceProdivers()
 				{
 					rsp = m_session.wait(m_strRootDir, true, m_nRootIndex);
 				}
-				if ( rsp.getError() != NULL ) {
+				if ( rsp->getError() != NULL ) {
 					//ResponseError* err =  r.getError();
 					cout << "get  dir occur error  " << m_strRootDir <<endl;					
 					continue;
 				}
 				children =  rsp->getNode()->getNodes();				
-				m_nRootIndex = rsp.getNode()->getModifiedIndex();
+				m_nRootIndex = rsp->getNode()->getModifiedIndex();
 			}
 
 			if ( i == 3 )
@@ -149,13 +154,13 @@ void ServiceConsumer::watchServiceProdivers()
 }
 
 
-bool  ServiceConsumer::updateServiceProvider(   const string& strSvrDir   )
+bool  ServiceConsumer::updateServiceProvider(const string& strSvrDir)
 {
 	bool xRet = true;
 	string strFullDir = m_strRootDir ;
 	if( strSvrDir.length() > 0 )
 	{
-		strSvrDir  +=  "/" + strSvrDir;
+		strFullDir +=  "/" + strSvrDir;
 	}
 
 	vector<Node> children;
@@ -165,7 +170,7 @@ bool  ServiceConsumer::updateServiceProvider(   const string& strSvrDir   )
 	{
 		if( !xExistDir ) 
 		{
-			int nRet = m_session.existDirImpl(strSvrDir);
+			int nRet = m_session.existDirImpl(strFullDir);
 			if( nRet == 0  )
 			{
 				xExistDir = true;
@@ -173,12 +178,13 @@ bool  ServiceConsumer::updateServiceProvider(   const string& strSvrDir   )
 			else if( nRet == EXIST_DIR_TYPE_ERR )
 			{
 				cout << " dir not exist  " << strFullDir <<endl;
-				return true;
+				return false;
 			}
+			//cout << " dir not exist  " << strFullDir << " svr dir  "<< strSvrDir<<" m_strRootDir "<< m_strRootDir <<endl;
 			continue;
 		}		
-		unique_ptr<GetResponse> r = m_session.get(strSvrDir);
-		if( r.getError() != NULL ) {
+		unique_ptr<GetResponse> r = m_session.get(strFullDir);
+		if( r->getError() != NULL ) {
 			cout << "get  dir occur error  " << strFullDir <<endl;					
 			continue;
 		}
@@ -196,13 +202,13 @@ bool  ServiceConsumer::updateServiceProvider(   const string& strSvrDir   )
 	m_mProviderIndex[strFullDir] = 0;
 	for( auto & node : children )
 	{
-		if( node.isDir() )
+		if( node.isDirectory() )
 		{
 			continue;
 		}
 
 		Host host;
-		if( Host::parseHostFromString(node.getKey(), host) )
+		if( Host::parseHostFromString(node.getValue(), host) )
 		{	
 			vec.push_back( host );
 			xRet = true;			

@@ -6,7 +6,8 @@ set(JIOT_COMMON_LIB_DIR /home/vagrant/jiot/jiot-cpp-common)
 set(JIOT_THRIFT_DIR ${JIOT_COMMON_LIB_DIR}/thirdparty/thrift) 
 
 add_definitions(-Wno-builtin-macro-redefined -std=c++11) 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror  -pedantic")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror  -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 set(CMAKE_BUILD_TYPE "Debug") 
 
 
@@ -22,8 +23,7 @@ include_directories(
 include 
 ${JIOT_THRIFT_DIR}/include 
 ${JIOT_THRIFT_DIR}/include/thrift
-${CMAKE_CURRENT_SOURCE_DIR}/third_libs/etcd
-${CMAKE_CURRENT_SOURCE_DIR}/third_libs/etcd/include
+${CMAKE_CURRENT_SOURCE_DIR}/third_libs/consul/include
 ${CMAKE_CURRENT_SOURCE_DIR}/third_libs/thrift
 )
 
@@ -32,6 +32,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/lib
 ${JIOT_THRIFT_DIR}/lib
 ${JIOT_COMMON_LIB_DIR}/server/external-el7/lib
 ${CMAKE_CURRENT_SOURCE_DIR}/lib
+${CMAKE_CURRENT_SOURCE_DIR}/third_libs/consul/lib
 )
 
 #gen library

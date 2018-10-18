@@ -11,6 +11,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "etcd_cli.h"
 #include<string>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace rapidjson;
@@ -46,6 +47,7 @@ unique_ptr<Document> with_curl(function<void (CURL*)> process) {
 
     Document *d = new Document;
     d->Parse(result.c_str());
+    cout<< "curl return :" << result<<endl;
     return std::unique_ptr<Document>(std::move(d));
   }
   throw "Curl failed to initialize";
@@ -54,6 +56,7 @@ unique_ptr<Document> with_curl(function<void (CURL*)> process) {
 string base_url(const Host &host, const string key) {
   ostringstream url;
   url << "http://" << host.getHost() << ":" << host.getPort() << "/v2/keys" << key;
+  cout<<"final url" << url.str()<<endl;
   return url.str();
 }
 
@@ -153,6 +156,7 @@ unique_ptr<Node> readNode(Value &root) {
 }
 
 unique_ptr<GetResponse> getHelper(string url) {
+  cout<<"get help final url : " << url <<endl;
   unique_ptr<Document> resp = with_curl([=](CURL *curl) {
       curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     });
@@ -501,7 +505,7 @@ bool Host::parseHostFromString( string strHost, Host& host)
 				try 
 				{
 					 host.setHost( items[0] );
-					 host.setPort( stoi(items[1] );
+					 host.setPort( stoi(items[1]) );
 					return true;
 				}
 				catch( std::invalid_argument &e )

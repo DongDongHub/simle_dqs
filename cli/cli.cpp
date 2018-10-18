@@ -6,13 +6,16 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TTransportUtils.h>
 
-#include"service_consuer.h"
+#include "ppconsul/ppconsul.h"
+#include "ppconsul/health.h"
+using namespace ppconsul;
+using namespace ppconsul::health;
+
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 
-#define ROOT_DIR "/jiot"
 #define SVR_DIR  "dqs"
 
 
@@ -21,21 +24,44 @@ using boost::shared_ptr;
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
-	string strIp;
-	int nPort;
-	vector<Host> hosts;
-	if( !ServiceProvider::parseHosts("192.168.33.10:2379", hosts) )
-	{
-		cout<<"parse etcd hosts error"<<endl;	
-	}	
-	ServiceConsumer svrConsumer( hosts, ROOT_DIR, SVR_DIR );
-	svrConsumer.getServiceProvider( SVR_DIR , string & ip, int & nPort)
+	int nPort=9092;
+	(void)nPort;
+	Consul consul("http://172.17.0.5:8500");
+	Health  health(consul);
+	auto services = health.service("jiot_dqs", health::kw::passing=true);
 	
-	shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
-	shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+	std::cout<<services.size()<<std::endl;
+	for( auto &val : services )
+	{
+		auto &v1 = std::get<1>(val);
+		std::cout<<v1.id<<"  "<<v1.name<<" "<<v1.address<<v1.port<<std::endl;
+	}
+
+/*
+       http::Status s;
+        auto r = consul.get(s, "jiot_dqs");
+        std::cout << s.code() << ' ' << s.message() << '\n';
+        if (r.headers())
+        {
+            std::cout
+                << "Index: " << r.headers().index() << '\n'
+                << "Known leader: " << (r.headers().knownLeader() ? "true" : "false") << '\n'
+                << "Lastcontact: " << r.headers().lastContact().count() << "\n\n";
+        }
+        else
+        {
+            std::cout << '\n';
+        }
+        std::cout << r.data() << std::endl;
+	std::string strIp = "127.0.0.1";
+*/
+
+/*	
+	boost::shared_ptr<TTransport> socket(new TSocket(strIp, nPort));
+	boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 //	shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 	//shared_ptr<TProtocol> protocol(new TDebugProtocol(transport));
-	shared_ptr<TProtocol> protocol(new TJSONProtocol(transport));
+	boost::shared_ptr<TProtocol> protocol(new TJSONProtocol(transport));
 
 	dqsServiceClient client(protocol);
 	try {
@@ -51,5 +77,7 @@ int main(int argc, char** argv) {
 	} catch (TException &tx) {
 		printf("ERROR: %s\n", tx.what());
 	}
+	sleep(100);
+*/
 }
 

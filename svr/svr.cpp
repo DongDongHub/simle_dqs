@@ -9,11 +9,11 @@
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
 #include<string>
-
+#include "ppconsul/agent.h"
 
 #include<iostream>
 
-#include"service_provider.h"
+//#include"service_provider.h"
 
 
 
@@ -22,7 +22,12 @@ using namespace ::apache::thrift::protocol;
 using namespace ::apache::thrift::transport;
 using namespace ::apache::thrift::server;
 
+using ppconsul::Consul;
+using namespace ppconsul::agent;
+
 using boost::shared_ptr;
+using std::cout;
+using std::endl;
 
 
 class dqsServiceHandler : virtual public dqsServiceIf {
@@ -41,22 +46,57 @@ class dqsServiceHandler : virtual public dqsServiceIf {
 };
 
 
+bool register_service()
+{
+	try
+	{
+		Consul consul("http://172.17.0.5:8500");
+		Agent agent(consul);
+		
+		agent.registerService(
+				"jiot_dqs",
+				TcpCheck{"172.17.0.1:9093", std::chrono::seconds(5)},
+				kw::id = "jiot_dqs_9093",
+				kw::port = 9093,
+				kw::tags = {"jiot::dqs", "query dqs"},
+				kw::address = "172.17.0.1"
+				);
+		return true;
+	}
+	catch( std::runtime_error &e ){
+		cout<<"catch std::runtime_error" <<e.what()<<endl;
+	}   
+	catch( std::exception &e  ){  
+		cout<<"catch std::exception " <<e.what()<<endl;
+	}   
+	catch(...){
+		cout<<"catch std::unidentify_error" <<endl;
+	} 
+	return false;
+}
+
 
 
 int main(int argc, char **argv) {
 	(void)argv;
 	(void)argc;
 	
-	int port = 9092;
-	vector<Host> hosts;
+	int port = 9093;
+
+	if ( !register_service() ) {
+		cout<<"register failed"<<endl;
+	}
+
+
+/*	vector<Host> hosts;
 	if( !ServiceProvider::parseHosts("192.168.33.10:2379", hosts) )
 	{
 		cout<<"parse etcd hosts error"<<endl;	
 	}
-	ServiceProvider svrProvider( hosts, port);
+	ServiceProvider svrProvider(hosts, port);
 	svrProvider.registerServiceOnce();
 	svrProvider.registerServicePeriodly();
-	
+*/	
 
 	boost::shared_ptr<dqsServiceHandler> handler(new dqsServiceHandler());
 	boost::shared_ptr<TProcessor> processor(new dqsServiceProcessor(handler));

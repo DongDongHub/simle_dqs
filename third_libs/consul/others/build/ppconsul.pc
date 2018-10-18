@@ -1,0 +1,10 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib64
+
+Name: ppconsul
+Description: C++ client for the Consul HTTP API
+Version: 0.1
+Libs: -L${libdir} -lppconsul -ljson11
+Cflags: -I${includedir}

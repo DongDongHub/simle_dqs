@@ -1,11 +1,13 @@
 #include"service_provider.h"
+#include <boost/algorithm/string.hpp>
 
 #include<exception>
 #include <thread>
-#include <boost/algorithm/string.hpp>
 #include<iostream>
+
 using std::cout;
 using std::endl;
+using namespace etcd;
 
 ServiceProvider::ServiceProvider( vector<Host>	hosts, 
 		int nPort,	
@@ -45,7 +47,7 @@ bool ServiceProvider::parseHosts( const string& strHosts, vector<Host>& hosts){
 			Host host;
 			if( Host::parseHostFromString( str, host) )
 			{
-				hosts.push_back( Host(items[0], nPort) );				
+				hosts.push_back(host);				
 			}
 		}
 	}
@@ -106,7 +108,7 @@ void ServiceProvider::registService(bool xOneTime )
 
 			if ( !xOneTime ) { //周期性的时候才需要去 sleep 去更新 ttl
 				if( xLastResult ) {
-					sleep(12);
+					sleep(10);
 				} else {
 					sleep(2);
 				}
@@ -133,7 +135,7 @@ bool ServiceProvider::registerServiceImpl()
 	str.append(to_string(m_nPort));
 	string strTmp = "dds123";
 	cout << "key : "<<str <<" val : " << strTmp <<endl;
-	unique_ptr<PutResponse> rsp = m_session.put(m_strSvrDir + str, strTmp, 60);
+	unique_ptr<PutResponse> rsp = m_session.put(m_strSvrDir + "/" + str, str, 15);
 	//	unique_ptr<PutResponse> rsp = s.put( str, strTmp, 15);
 	if( rsp->getError() != nullptr ) // mkdir err
 	{

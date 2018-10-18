@@ -5,7 +5,7 @@
 #include<string>
 
 //etcd client
-#include "etcdclient.h"
+#include "etcd_cli.h"
 
 namespace etcd {
 

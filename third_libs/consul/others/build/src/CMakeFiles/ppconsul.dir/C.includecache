@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../ext/b64/cdecode.h
+
+../ext/b64/cencode.h
+
+/home/vagrant/project/simple_dqs/third_libs/consul/ppconsul/ext/b64/cdecode.c
+b64/cdecode.h
+-
+
+/home/vagrant/project/simple_dqs/third_libs/consul/ppconsul/ext/b64/cencode.c
+b64/cencode.h
+-
+

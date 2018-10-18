@@ -1,0 +1,1 @@
+/usr/bin/c++   -Wall -fPIC  -rdynamic CMakeFiles/status-tests.dir/__/main.cpp.o CMakeFiles/status-tests.dir/status_tests.cpp.o  -o ../../output/status-tests -Wl,-rpath,/home/vagrant/jiot/jiot-cpp-common/server/external-el7/lib ../../output/libppconsul.a ../../output/libjson11.a /home/vagrant/jiot/jiot-cpp-common/server/external-el7/lib/libboost_regex-mt.so -lcurl 

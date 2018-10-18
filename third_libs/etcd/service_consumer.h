@@ -26,8 +26,8 @@ public:
 				 const vector<string> & vecSvrDirs);
 
 	private:
-		void updateServiceProvider(   );
-		void updateServiceProviderOnce(   const string&       strSvrDir);
+		void updateServiceProvider();
+		bool updateServiceProvider( const  string&  strSvrDir);
 		void watchServiceProdivers();
 
 	public:
