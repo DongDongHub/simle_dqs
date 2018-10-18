@@ -1,1 +1,0 @@
-/usr/bin/c++   -Wall -fPIC  -rdynamic CMakeFiles/kv-tests.dir/__/main.cpp.o CMakeFiles/kv-tests.dir/kv_tests.cpp.o  -o ../../output/kv-tests -Wl,-rpath,/home/vagrant/jiot/jiot-cpp-common/server/external-el7/lib ../../output/libppconsul.a ../../output/libjson11.a /home/vagrant/jiot/jiot-cpp-common/server/external-el7/lib/libboost_regex-mt.so -lcurl 
