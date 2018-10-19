@@ -9,105 +9,117 @@
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TBufferTransports.h>
 #include<string>
-#include "ppconsul/agent.h"
 
 #include<iostream>
 
-//#include"service_provider.h"
-
-
+#include"service_provider.h"
 
 using namespace ::apache::thrift;
 using namespace ::apache::thrift::protocol;
 using namespace ::apache::thrift::transport;
 using namespace ::apache::thrift::server;
 
-using ppconsul::Consul;
-using namespace ppconsul::agent;
 
 using boost::shared_ptr;
 using std::cout;
 using std::endl;
 
+using ppconsul::ServiceProvider;
 
-class dqsServiceHandler : virtual public dqsServiceIf {
-	public:
-		dqsServiceHandler() {
-			// Your initialization goes here
-			m_nSeqId = 0;
-		}
+#define SVR_TAGS {"dqs", "base"}
 
-		void QueryDeviceInfo(std::string& _return, const std::string& req) {
-			// Your implementation goes here
-			_return = req +" id : " + std::to_string(++m_nSeqId);
-		}
-	private:
-		int m_nSeqId;
+
+TSimpleServer* g_server = NULL;
+ServiceProvider* g_svrProvider = NULL;
+
+
+
+class dqsServiceHandler : virtual public dqsServiceIf
+{
+public:
+    dqsServiceHandler()
+    {
+        // Your initialization goes here
+        m_nSeqId = 0;
+    }
+
+    void QueryDeviceInfo(std::string& _return, const std::string& req)
+    {
+        // Your implementation goes here
+        _return = req +" id : " + std::to_string(++m_nSeqId);
+    }
+private:
+    int m_nSeqId;
 };
 
 
-bool register_service()
+void signalHandler(int nSignal ) //信号处理
 {
-	try
+	if ( SIGTERM == nSignal )
 	{
-		Consul consul("http://172.17.0.5:8500");
-		Agent agent(consul);
+		JPLOG_FATAL("receive SIGTERM signal.");
+		if(g_svrProvider != NULL )
+			{
+			g_svrProvider->unregister();
+			}
 		
-		agent.registerService(
-				"jiot_dqs",
-				TcpCheck{"172.17.0.1:9093", std::chrono::seconds(5)},
-				kw::id = "jiot_dqs_9093",
-				kw::port = 9093,
-				kw::tags = {"jiot::dqs", "query dqs"},
-				kw::address = "172.17.0.1"
-				);
-		return true;
+		if( g_server == NULL ) 
+		{
+			printf("g_server null detected \n");
+		}
+		g_server->stop();
+		JPLOG_FATAL("program exit now ...");
+		//exit(0);
 	}
-	catch( std::runtime_error &e ){
-		cout<<"catch std::runtime_error" <<e.what()<<endl;
-	}   
-	catch( std::exception &e  ){  
-		cout<<"catch std::exception " <<e.what()<<endl;
-	}   
-	catch(...){
-		cout<<"catch std::unidentify_error" <<endl;
-	} 
-	return false;
 }
 
 
 
-int main(int argc, char **argv) {
-	(void)argv;
-	(void)argc;
-	
-	int port = 9093;
 
-	if ( !register_service() ) {
-		cout<<"register failed"<<endl;
-	}
+int main(int argc, char **argv)
+{
+    (void)argv;
+    (void)argc;
 
 
-/*	vector<Host> hosts;
-	if( !ServiceProvider::parseHosts("192.168.33.10:2379", hosts) )
+	if( signal(SIGTERM, signalHandler) == SIG_ERR )
 	{
-		cout<<"parse etcd hosts error"<<endl;	
+		cout << "init signal error " << endl;
+		return -1;
 	}
-	ServiceProvider svrProvider(hosts, port);
-	svrProvider.registerServiceOnce();
-	svrProvider.registerServicePeriodly();
-*/	
 
-	boost::shared_ptr<dqsServiceHandler> handler(new dqsServiceHandler());
-	boost::shared_ptr<TProcessor> processor(new dqsServiceProcessor(handler));
-	boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
-	boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
-//	boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-//	boost::shared_ptr<TProtocolFactory> protocolFactory(new TDebugProtocolFactory());
-	boost::shared_ptr<TProtocolFactory> protocolFactory(new TJSONProtocolFactory());
 
-	TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
-	server.serve();
-	return 0;
+    int port = 9093;	
+
+    ServiceProvider SvrProvider("http://172.17.0.5:8500", port);
+    if( !SvrProvider.register( SVR_TAGS ) ) {
+        cout<< "svr register failed."<<endl;
+    } else {
+        cout<<"svr register success."<<endl;
+    }
+
+
+    /*  vector<Host> hosts;
+        if( !ServiceProvider::parseHosts("192.168.33.10:2379", hosts) )
+        {
+            cout<<"parse etcd hosts error"<<endl;
+        }
+        ServiceProvider svrProvider(hosts, port);
+        svrProvider.registerServiceOnce();
+        svrProvider.registerServicePeriodly();
+    */
+
+    boost::shared_ptr<dqsServiceHandler> handler(new dqsServiceHandler());
+    boost::shared_ptr<TProcessor> processor(new dqsServiceProcessor(handler));
+    boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
+    boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+//  boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+//  boost::shared_ptr<TProtocolFactory> protocolFactory(new TDebugProtocolFactory());
+    boost::shared_ptr<TProtocolFactory> protocolFactory(new TJSONProtocolFactory());
+
+    TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
+	g_server = NULL;
+    server.serve();
+    return 0;
 }
 
