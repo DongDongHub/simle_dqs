@@ -18,7 +18,7 @@ bool ServiceConsumer::get(const string& svrName,  string& strIp, int& nPort, con
 
         size_t size = services.size();
         cout<<"get svr prodvider size :"<<size<<endl;
-        if( size ) {
+        if( size == 0 ) {
             m_strErrMsg = "no available service provider to use";
             return false;
         }
@@ -43,7 +43,7 @@ size_t ServiceConsumer::nextIndex(const string& svrName, const string& tag, cons
     string tmp = svrName;  //format key like  dc-svr1-tag
     size_t index = 0;
     if(dc.length() > 0) {
-        tmp = dc + "-" + svrName
+        tmp = dc + "-" + svrName;
     }
 
     if( tag.length() > 0 ) {

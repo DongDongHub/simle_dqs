@@ -27,6 +27,7 @@ using std::endl;
 using ppconsul::ServiceProvider;
 
 #define SVR_TAGS {"dqs", "base"}
+#define SVR_NAME "jiot_dqs"
 
 
 TSimpleServer* g_server = NULL;
@@ -57,18 +58,18 @@ void signalHandler(int nSignal ) //信号处理
 {
 	if ( SIGTERM == nSignal )
 	{
-		JPLOG_FATAL("receive SIGTERM signal.");
+		cout<<"receive SIGTERM signal."<<endl;
 		if(g_svrProvider != NULL )
-			{
+		{
 			g_svrProvider->unregister();
-			}
+		}
 		
 		if( g_server == NULL ) 
 		{
-			printf("g_server null detected \n");
+			cout<<"g_server null detected"<<endl;
 		}
 		g_server->stop();
-		JPLOG_FATAL("program exit now ...");
+		cout<<"program exit now ..."<<endl;
 		//exit(0);
 	}
 }
@@ -88,11 +89,11 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+    int port = 9092;	
 
-    int port = 9093;	
-
-    ServiceProvider SvrProvider("http://172.17.0.5:8500", port);
-    if( !SvrProvider.register( SVR_TAGS ) ) {
+    ServiceProvider svrProvider("http://127.0.0.1:8500", SVR_NAME, port);
+    g_svrProvider = &svrProvider;
+    if( !svrProvider.register1( SVR_TAGS ) ) {
         cout<< "svr register failed."<<endl;
     } else {
         cout<<"svr register success."<<endl;
@@ -118,7 +119,7 @@ int main(int argc, char **argv)
     boost::shared_ptr<TProtocolFactory> protocolFactory(new TJSONProtocolFactory());
 
     TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
-	g_server = NULL;
+    g_server = &server;
     server.serve();
     return 0;
 }

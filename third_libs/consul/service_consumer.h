@@ -6,6 +6,10 @@
 #include "ppconsul/ppconsul.h" //consul client
 #include "ppconsul/health.h"
 
+using std::cout;
+using std::endl;
+using std::string;
+
 using namespace ppconsul::health;
 namespace ppconsul
 {
@@ -24,7 +28,7 @@ namespace ppconsul
     private:
         string  m_strConsulUrl;     // consul address
         string  m_strErrMsg;
-        map<string, int> m_mIndex;
+        std::map<string, int> m_mIndex;
 
     };
 

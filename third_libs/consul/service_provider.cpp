@@ -19,8 +19,8 @@ ServiceProvider::ServiceProvider( const string strConsulUrl,
                                   const string strIfName
                                 ):
     m_strConsulUrl(strConsulUrl),
-    m_strSvrName(strSvrName)
-    m_nSvrPort(nPort)，
+    m_strSvrName(strSvrName),
+    m_nSvrPort(nPort),
     m_nChkSec(nChkSec),
     m_strIfName(strIfName)
 {
@@ -29,7 +29,7 @@ ServiceProvider::ServiceProvider( const string strConsulUrl,
 }
 
 
-bool ServiceProvider::register(     vector<string> tags)
+bool ServiceProvider::register1( std::unordered_set<string> tags)
 {
     if( m_nStat == CONSUL_SVR_STAT_REG ) {
         return true;
@@ -48,16 +48,17 @@ bool ServiceProvider::register(     vector<string> tags)
     }
 
     try {
-        Consul consul(m_strChkUrl);
+	cout<<m_strConsulUrl<<endl;
+        Consul consul(m_strConsulUrl);
         Agent agent(consul);
 
         agent.registerService(
             m_strSvrName,
             TcpCheck{m_strChkUrl, std::chrono::seconds(m_nChkSec)},
-            kw::id = m_strSvrId,
-            kw::port = m_nSvrPort,
-            kw::tags = tags,
-            kw::address = m_strSvrAddr
+            agent::kw::id = m_strSvrId,
+            agent::kw::port = m_nSvrPort,
+            agent::kw::tags = tags,
+            agent::kw::address = m_strSvrAddr
         );
         return true;
     } catch( std::runtime_error &e ) {
@@ -79,8 +80,8 @@ void ServiceProvider::init()
     }
 
     if ( getIp() ) { // get local ip fail
-        string tmp = m_strSvrAddr + ":" + to_string(m_nSvrPort);
-        m_strSvrId = m_strSvrName + "-" tmp;
+        string tmp = m_strSvrAddr + ":" + std::to_string(m_nSvrPort);
+        m_strSvrId = m_strSvrName + "-" + tmp;
         m_strChkId = "service:" + m_strSvrId;
         m_strChkUrl = tmp;
         m_nStat = CONSUL_SVR_STAT_INIT;
@@ -103,7 +104,7 @@ bool ServiceProvider::getIp()
         m_strErrMsg = "getIp create fd failed";
         return xRet;
     }
-    ioctl(sockfd, SIOCGIFCONF, &ifconf); //获取所有接口信息
+    ioctl(fd, SIOCGIFCONF, &ifconf); //获取所有接口信息
 
     //接下来一个一个的获取IP地址
     ifreq = (struct ifreq*)ifconf.ifc_buf;
@@ -120,7 +121,7 @@ bool ServiceProvider::getIp()
                 continue;
             }
 
-            if ( ioctl(sockfd, SIOCGIFFLAGS, ifreq) < 0 ) {
+            if ( ioctl(fd, SIOCGIFFLAGS, ifreq) < 0 ) {
                 m_strErrMsg = "getIp get if flag err";
                 xRet = false;
             }
@@ -150,21 +151,21 @@ bool ServiceProvider::getIp()
 bool ServiceProvider::unregister()
 {
     if( m_nStat != CONSUL_SVR_STAT_INIT && m_nStat != CONSUL_SVR_STAT_REG ) {
-        return;
+        return false;
     }
 
     try {
-        Consul consul(m_strChkUrl);
+        Consul consul(m_strConsulUrl);
         Agent agent(consul);
         agent.deregisterService( m_strSvrId );
         agent.deregisterCheck( m_strChkId );
         return true;
     } catch( std::runtime_error &e ) {
         cout<<"catch std::runtime_error" <<e.what()<<endl;
-        m_strErrMsg = "catch std::runtime_error" + e.what();
+        m_strErrMsg = "catch std::runtime_error" + string(e.what());
     } catch( std::exception &e  ) {
         cout<<"catch std::exception " <<e.what()<<endl;
-        m_strErrMsg = "catch std::exception" + e.what();
+        m_strErrMsg = "catch std::exception" + string(e.what());
     } catch(...) {
         cout<<"catch std::unidentify_error" <<endl;
         m_strErrMsg = "catch std::unidentify_error";

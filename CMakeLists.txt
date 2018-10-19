@@ -24,6 +24,7 @@ include
 ${JIOT_THRIFT_DIR}/include 
 ${JIOT_THRIFT_DIR}/include/thrift
 ${CMAKE_CURRENT_SOURCE_DIR}/third_libs/consul/include
+${CMAKE_CURRENT_SOURCE_DIR}/third_libs/consul
 ${CMAKE_CURRENT_SOURCE_DIR}/third_libs/thrift
 )
 

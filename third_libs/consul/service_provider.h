@@ -2,10 +2,14 @@
 #define CONSUL_SERVICE_PROVIDER_H
 
 #include<string>
+#include<unordered_set>
 
 //consul client
 #include "ppconsul/agent.h"
 using namespace ppconsul::agent;
+using std::string;
+using std::cout;
+using std::endl;
 
 #define CONSUL_SVR_STAT_UNINIT 0
 #define CONSUL_SVR_STAT_INIT   1
@@ -26,8 +30,8 @@ namespace ppconsul
                        );
 
     public:
-        bool register(     vector<string> tags );
-        void unregister();
+        bool register1( std::unordered_set<std::string>  tags );
+        bool unregister();
 
     private:
         bool unregisterService();
