@@ -3,44 +3,59 @@
 
 using namespace ppconsul;
 
-ServiceConsumer::ServiceConsumer(const string strConsulUrl):m_strConsulUrl(strConsulUrl)
+ServiceConsumer::ServiceConsumer(const        std::vector< std::string> vecConsuls):m_vecConsuls(vecConsuls)
 {
-
+    m_nCurrIndex = 0;
+    m_nMaxRetryTime = 3;
 }
 
-bool ServiceConsumer::get(const string& svrName,  string& strIp, int& nPort, const string& tag, const string& dc)
+bool ServiceConsumer::get(const std::string& svrName,  std::string& strIp, int& nPort, const std::string& tag, const std::string& dc)
 {
-    try {
 
-        Consul consul(m_strConsulUrl);
-        Health  health(consul);
-        auto services = health.service(svrName, health::kw::passing=true, health::kw::tag = tag, health::kw::dc = dc);
+    if( m_vecConsuls.size() == 0 ) {
+        m_strErrMsg = "vec consuls no available host";
+        return false;
+    }
 
-        size_t size = services.size();
-        cout<<"get svr prodvider size :"<<size<<endl;
-        if( size == 0 ) {
-            m_strErrMsg = "no available service provider to use";
-            return false;
+    for( int i = 0; i < m_nMaxRetryTime; ++i ) {
+
+        try {
+
+            if( i != 0 ) { //first time failed try second, change the consul addr to next
+                m_nCurrIndex =  (m_nCurrIndex + 1) / m_vecConsuls.size();
+                std::cout<<" try failed incr m_nCurrIndex " << m_nCurrIndex << std::endl;
+            }
+            Consul consul("http://" + m_vecConsuls[m_nCurrIndex]);
+
+			Health  health(consul);
+			auto services = health.service(svrName, health::kw::passing=true, health::kw::tag = tag, health::kw::dc = dc);
+
+            size_t size = services.size();
+            std::cout<<"get svr prodvider size :"<<size<<std::endl;
+            if( size == 0 ) {
+                m_strErrMsg = "no available service provider to use";
+                return false;
+            }
+            auto &svr = services[ nextIndex(svrName, tag, dc, size) ];
+            auto &item = std::get<1>(svr);
+            strIp = item.address;
+            nPort = item.port;
+            return true;
+        } catch( std::runtime_error &e ) {
+            std::cout<<"catch std::runtime_error" <<e.what()<<std::endl;
+        } catch( std::exception &e  ) {
+            std::cout<<"catch std::exception " <<e.what()<<std::endl;
+        } catch(...) {
+            std::cout<<"catch std::unidentify_error" <<std::endl;
         }
-        auto &svr = services[ nextIndex(svrName, tag, dc, size) ];
-        auto &item = std::get<1>(svr);
-        strIp = item.address;
-        nPort = item.port;
-        return true;
-    } catch( std::runtime_error &e ) {
-        cout<<"catch std::runtime_error" <<e.what()<<endl;
-    } catch( std::exception &e  ) {
-        cout<<"catch std::exception " <<e.what()<<endl;
-    } catch(...) {
-        cout<<"catch std::unidentify_error" <<endl;
     }
     return false;
 }
 
 
-size_t ServiceConsumer::nextIndex(const string& svrName, const string& tag, const string& dc, size_t size)
+size_t ServiceConsumer::nextIndex(const std::string& svrName, const std::string& tag, const std::string& dc, size_t size)
 {
-    string tmp = svrName;  //format key like  dc-svr1-tag
+    std::string tmp = svrName;  //format key like  dc-svr1-tag
     size_t index = 0;
     if(dc.length() > 0) {
         tmp = dc + "-" + svrName;

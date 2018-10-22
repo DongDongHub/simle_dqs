@@ -3,12 +3,9 @@
 
 #include<string>
 #include<map>
+#include<vector>
 #include "ppconsul/ppconsul.h" //consul client
 #include "ppconsul/health.h"
-
-using std::cout;
-using std::endl;
-using std::string;
 
 using namespace ppconsul::health;
 namespace ppconsul
@@ -17,18 +14,20 @@ namespace ppconsul
     class ServiceConsumer
     {
     public:
-        ServiceConsumer( const string strConsulUrl);
+        ServiceConsumer( const        std::vector< std::string> vecConsuls);
 
     public:
-        bool get(const string& strSvrName,   string& strIp, int& nPort, const string& strTag = "", const string& strDc = "");
+        bool get(const std::string& strSvrName,   std::string& strIp, int& nPort, const std::string& strTag = "", const std::string& strDc = "");
 
     private:
-        size_t nextIndex(const string& strSvrName, const string& strTag, const string& strDc, size_t size);
+        size_t nextIndex(const std::string& strSvrName, const std::string& strTag, const std::string& strDc, size_t size);
 
     private:
-        string  m_strConsulUrl;     // consul address
-        string  m_strErrMsg;
-        std::map<string, int> m_mIndex;
+        std::vector<std::string>  m_vecConsuls;     // consul address
+        std::string  m_strErrMsg;
+		size_t       m_nCurrIndex;
+		int 		 m_nMaxRetryTime;
+        std::map<std::string, int> m_mIndex;
 
     };
 
