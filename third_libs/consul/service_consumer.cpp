@@ -3,7 +3,7 @@
 
 using namespace ppconsul;
 
-ServiceConsumer::ServiceConsumer(const        std::vector< std::string> vecConsuls):m_vecConsuls(vecConsuls)
+ServiceConsumer::ServiceConsumer(const std::vector< std::string> vecConsuls):m_vecConsuls(vecConsuls)
 {
     m_nCurrIndex = 0;
     m_nMaxRetryTime = 3;
@@ -17,7 +17,7 @@ bool ServiceConsumer::get(const std::string& svrName,  std::string& strIp, int& 
         return false;
     }
 
-    for( int i = 0; i < m_nMaxRetryTime; ++i ) {
+    for( size_t i = 0; i < m_nMaxRetryTime; ++i ) {
 
         try {
 
@@ -26,9 +26,8 @@ bool ServiceConsumer::get(const std::string& svrName,  std::string& strIp, int& 
                 std::cout<<" try failed incr m_nCurrIndex " << m_nCurrIndex << std::endl;
             }
             Consul consul("http://" + m_vecConsuls[m_nCurrIndex]);
-
-			Health  health(consul);
-			auto services = health.service(svrName, health::kw::passing=true, health::kw::tag = tag, health::kw::dc = dc);
+	    Health  health(consul);
+	    auto services = health.service(svrName, health::kw::passing=true, health::kw::tag = tag, health::kw::dc = dc);
 
             size_t size = services.size();
             std::cout<<"get svr prodvider size :"<<size<<std::endl;
@@ -72,7 +71,3 @@ size_t ServiceConsumer::nextIndex(const std::string& svrName, const std::string&
     m_mIndex[tmp] = index + 1;
     return index;  // 从 0 开始
 }
-
-
-
-

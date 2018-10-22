@@ -27,7 +27,7 @@ namespace ppconsul
                        );
 
     public:
-        bool register1( std::unordered_set<std::std::string>  tags );
+        bool register1( std::unordered_set<std::string>  tags );
         bool unregister();
 
     private:

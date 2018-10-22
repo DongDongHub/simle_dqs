@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 
     int port = 9092;	
 
-    ServiceProvider svrProvider("http://127.0.0.1:8500", SVR_NAME, port);
+    ServiceProvider svrProvider({"127.0.0.1:8500"}, SVR_NAME, port);
     g_svrProvider = &svrProvider;
     if( !svrProvider.register1( SVR_TAGS ) ) {
         cout<< "svr register failed."<<endl;

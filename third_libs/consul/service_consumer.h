@@ -14,7 +14,7 @@ namespace ppconsul
     class ServiceConsumer
     {
     public:
-        ServiceConsumer( const        std::vector< std::string> vecConsuls);
+        ServiceConsumer(const std::vector< std::string> vecConsuls);
 
     public:
         bool get(const std::string& strSvrName,   std::string& strIp, int& nPort, const std::string& strTag = "", const std::string& strDc = "");

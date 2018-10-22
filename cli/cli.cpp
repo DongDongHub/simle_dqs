@@ -25,19 +25,19 @@ int main(int argc, char** argv)
 	(void)argc;
 	(void)argv;
 
-	string strIp;
+	std::string strIp;
 	int nPort;
 
-	ServiceConsumer svrConsumer("http://127.0.0.1:8500");
+	ServiceConsumer svrConsumer({"127.0.0.1:8500"});
 	if( !svrConsumer.get(SVR_NAME, strIp, nPort, SVR_TAG, SVR_DC) ) {
-		cout<<"get failed please check it"<<endl;
+		std::cout<<"get failed please check it"<<std::endl;
 	}
-	cout<<"get ip :"<<strIp << " port :"<<nPort<<endl;
+	std::cout<<"get ip :"<<strIp << " port :"<<nPort<<std::endl;
 
 	if( !svrConsumer.get(SVR_NAME, strIp, nPort, SVR_TAG, SVR_DC) ) {
-		cout<<"get failed please check it"<<endl;
+		std::cout<<"get failed please check it"<<std::endl;
 	}
-	cout<<"get ip :"<<strIp << " port :"<<nPort<<endl;
+	std::cout<<"get ip :"<<strIp << " port :"<<nPort<<std::endl;
 
 
 	boost::shared_ptr<TTransport> socket(new TSocket(strIp, nPort));

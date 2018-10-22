@@ -50,7 +50,7 @@ bool ServiceProvider::register1( std::unordered_set<std::string> tags)
     }
 
 
-    for( int i = 0; i < m_nMaxRetryTime; ++i ) {
+    for( size_t i = 0; i < m_nMaxRetryTime; ++i ) {
         try {
             if( i != 0 ) { //first time failed try second, change the consul addr to next
                 m_nCurrIndex =  (m_nCurrIndex + 1) / m_vecConsuls.size();
@@ -92,7 +92,7 @@ void ServiceProvider::init()
     }
 
     if ( getIp() ) { // get local ip fail
-        std::string tmp = m_strSvrAddr + ":" + std::to_std::string(m_nSvrPort);
+        std::string tmp = m_strSvrAddr + ":" + std::to_string(m_nSvrPort);
         m_strSvrId = m_strSvrName + "-" + tmp;
         m_strChkId = "service:" + m_strSvrId;
         m_strChkUrl = tmp;
@@ -165,7 +165,7 @@ bool ServiceProvider::unregister()
     if( m_nStat != CONSUL_SVR_STAT_INIT && m_nStat != CONSUL_SVR_STAT_REG ) {
         return false;
     }
-    for( int i = 0; i < m_nMaxRetryTime; ++i ) {
+    for( size_t i = 0; i < m_nMaxRetryTime; ++i ) {
         try {
             if( i != 0 ) { //first time failed try second, change the consul addr to next
                 m_nCurrIndex =  (m_nCurrIndex + 1) / m_vecConsuls.size();
